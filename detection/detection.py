@@ -31,8 +31,8 @@ class Detection:
     __truth_size = 0
     __truth_update_frac = 0.0
 
-    def __init__(self, headers, labels, features, target, cat_header_list, categories_list, truth_size, truth_update_frac,
-                 threshold_percentile):
+    def __init__(self, headers, labels, features, target, cat_header_list, categories_list, truth_size,
+                 truth_update_frac, threshold_percentile):
         self.__headers = headers
         self.__labels = labels
         self.__classes = [i for i in range(len(labels))]
