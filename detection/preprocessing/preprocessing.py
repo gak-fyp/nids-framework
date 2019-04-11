@@ -29,7 +29,6 @@ def process_features(df_x, header_list, categories_list):
 def __categorical_to_one_hot(df, categories):
     # Input: column of a DataFrame with categorical data, Array of categorical values
     # Output: New DataFrame containing one column for each category in one-hot notation
-
     assert np.array(categories).ndim == 1
     categories = [categories]
 
@@ -41,9 +40,9 @@ def __categorical_to_one_hot(df, categories):
 
     return pd.DataFrame(res, columns=headers)
 
-def process_labels(df_y, target, labels, classes):
+def process_labels(df_y, labels, classes):
     label_to_id = {labels[i] : classes[i] for i in range(len(labels))}
-    values = df_y[target[0]].values
+    values = np.ndarray.flatten(df_y.values)
     ids = []
     for val in values:
         ids.append(label_to_id[val])

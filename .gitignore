@@ -1,2 +1,7 @@
 .idea
 .vscodes
+__pycache__
+.csv
+.pkl
+.pcap
+
