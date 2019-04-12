@@ -32,10 +32,8 @@ class Detection:
     def initialize(self, normal_data, X, y):
         self.__truth.set_truth(normal_data)
 
-        self.__log("Training outlier ensemble...")
         self.__outlier.train(self.__truth.get_truth())
 
-        self.__log("Training classifiers...")
         self.__cls.train(X, y)
 
     def detect_outliers(self, X):
@@ -45,7 +43,6 @@ class Detection:
         return outlier_indices
 
     def classfiy(self, X):
-        self.__log("Classifying outliers")
         y_pred = self.__cls.predict(X)
         return y_pred
 

@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.exceptions import UndefinedMetricWarning
 
-import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
 
 import random as rd
 import time
@@ -156,14 +156,19 @@ if __name__ == '__main__':
     print("Initializing detectors...")
     i = 0
     size = df_X.shape[0]
-    minsize = 50
-    maxsize = 1000
+    minsize = 100000000
+    maxsize = 500000000
     new_features = df_X.columns
+
+    scaler = StandardScaler()
+
     while i < size:
         print(str(i) + "/" + str(size))
         j = rd.randint(i + minsize, i + maxsize)
         j = min(j, size)
-        X= pd.DataFrame(df_X[i:j].values, columns=new_features, dtype=np.float64)
+
+        scaler.partial_fit(df_X)
+        X= pd.DataFrame(scaler.transform(df_X[i:j].values), columns=new_features, dtype=np.float64)
         y= np.ndarray.flatten(pd.DataFrame(df_y[i:j].values, columns=['class'], dtype=np.int64).values)
         if i == 0:
             det.initialize(X, X, y)
@@ -173,12 +178,20 @@ if __name__ == '__main__':
         det.update_classifier(X, y)
         i = j
 
+
     print("Done")
     breakpoints = {x : [] for x in file_list[1:]}
+
+    np.set_printoptions(linewidth=150)
 
     for file in file_list[1:]:
         print("Loading data...")
         df_X, df_y = read_file(file)
+
+        df_X = scaler.transform(df_X)
+        df_X = pd.DataFrame(df_X, columns=new_features, dtype=np.float64)
+
+
         print("Done")
         print("Detecting file " + file)
 
@@ -196,10 +209,8 @@ if __name__ == '__main__':
             j = min(j, size)
             X = pd.DataFrame(df_X[i:j].values, columns=new_features, dtype=np.float64)
             y = pd.DataFrame(df_y[i:j].values, columns=['class'], dtype=np.int64)
-            y_1d = np.ndarray.flatten(y.values)
 
             outlier_indices = det.detect_outliers(X)
-            outlier_report(y_1d, outlier_indices)
             out_idx.extend([x + breakpoints[file][c] for x in outlier_indices])
             c += 1
 
@@ -208,135 +219,48 @@ if __name__ == '__main__':
 
             outlier_X = X.iloc[outlier_indices]
             outlier_y = y.iloc[outlier_indices]
-            outlier_y_1d = y_1d[outlier_indices]
 
             y_pred = det.classfiy(outlier_X)
-            print(classification_report(outlier_y_1d, y_pred, labels=classes))
+            y_pred_list.extend(y_pred)
 
-            det.update_classifier(outlier_X, outlier_y)
+            if c % 10 == 0:
+                outlier_report(np.ndarray.flatten(y.values), outlier_indices)
+                print(classification_report(np.ndarray.flatten(outlier_y.values), y_pred, labels=classes))
+                print(confusion_matrix(np.ndarray.flatten(outlier_y.values), y_pred, labels=classes))
+
+
+            correct_indices, wrong_indices = classification_result(np.ndarray.flatten(outlier_y.values), y_pred)
+
+            wrong_X = outlier_X.iloc[wrong_indices]
+            wrong_y = outlier_y.iloc[wrong_indices]
+
+            update_X = outlier_X.append(wrong_X)
+            update_y = outlier_y.append(wrong_y)
+
+            #det.update_classifier(wrong_X, np.ndarray.flatten(wrong_y.values))
+
+            det.update_classifier(update_X, np.ndarray.flatten(update_y.values))
+
+            #det.update_classifier(outlier_X, np.ndarray.flatten(outlier_y.values))
 
             outcount = 0
             for k in range(X.shape[0]):
-                if outlier_indices[min(outcount, len(outlier_indices) - 1)] == j:
+                if outlier_indices[min(outcount, len(outlier_indices) - 1)] == k:
                     final_pred.append(y_pred[outcount])
                     outcount += 1
                 else:
                     final_pred.append(0)  # Class Normal
-            y_pred_list.extend(y_pred)
-
             i = j
-        print("FINAL REPORT OF FILE")
+
+        print("FINAL REPORT OF FILE " + file)
+        print("======================================================================================")
+        outlier_report(np.ndarray.flatten(df_y.values), out_idx)
         print("======================================================================================")
         print(classification_report(df_y.iloc[out_idx].values, y_pred_list, labels=classes))
+        print(confusion_matrix(df_y.iloc[out_idx].values, y_pred_list, labels=classes))
         print("======================================================================================")
         print(classification_report(df_y.values, final_pred, labels=classes))
+        print(confusion_matrix(df_y.values, final_pred, labels=classes))
         print("======================================================================================")
-    exit()
-    i = 0
-    while i < s:
-        breakpoints.append(i)
-        j = rd.randint(i + minsize, i + maxsize)
-        j = min(j, s)
-        Xt_slice = pd.DataFrame(Xt[i:j].values, columns=new_features, dtype=np.float64)
-        yt_slice = pd.DataFrame(yt_cls[i:j].values, columns=['class'], dtype=np.int64)
-        list_Xt.append(Xt_slice)
-        list_yt.append(yt_slice)
-        i = j
 
-    y_pred_list = []
-    out_idx = []
-    """
-    normal_X = list_Xt[0].iloc[list_yt[0].loc[list_yt[0]['class'] == 0].index].copy()
-    truth_size = min(truth_size, normal_X.shape[0])
-    # Choose "truth_size" randomly sampled rows from all normal records
-    truth = normal_X.sample(n=truth_size, random_state=None)
-
-    det.update_outlier(truth)
-
-    df_X = list_Xt[0].drop(truth.index)
-    df_y = list_yt[0].drop(truth.index)
-
-    det.update_classifier(df_X, df_y)
-    """
-    #cls_report = []
-    #xaxis = []
-
-    final_pred = []
-
-    for i in range(len(list_Xt)):
-        #xaxis.append(i)
-        print("Step " + str(i))
-        X = list_Xt[i]
-        y = list_yt[i]
-        y_cls = y
-
-        outlier_indices = det.detect_outliers(X)
-        outlier_report(y_cls.values, outlier_indices)
-
-        out_idx.extend([x + breakpoints[i] for x in outlier_indices])
-
-        normal_indices = X.index.difference(outlier_indices)
-        det.update_outlier(X.iloc[normal_indices])
-
-        outlier_X = X.iloc[outlier_indices]
-        y_pred = det.classfiy(outlier_X)
-        outlier_y = y_cls.iloc[outlier_indices]
-        print("")
-        #cls_report.append(classification_report(outlier_y.values, y_pred, output_dict=True, labels=classes))
-
-        print(classification_report(outlier_y.values, y_pred, labels=classes))
-
-        """
-
-        correct_indices, wrong_indices = classification_result(outlier_y.values, y_pred)
-
-        correct_X = outlier_X.iloc[correct_indices]
-        wrong_X = outlier_X.iloc[wrong_indices]
-        wrong_y = outlier_y.iloc[wrong_indices]
-
-        update_X = outlier_X.append(wrong_X)
-        update_y = outlier_y.append(wrong_y)
-        """
-        #det.update_classifier(update_X, update_y)
-        #det.update_classifier(wrong_X, wrong_y)
-        det.update_classifier(outlier_X, outlier_y)
-
-        outcount = 0
-        for j in range(list_Xt[i].shape[0]):
-            if outlier_indices[min(outcount, len(outlier_indices) - 1)] == j:
-                final_pred.append(y_pred[outcount])
-                outcount += 1
-            else:
-                final_pred.append(0) # Class Normal
-
-        y_pred_list.extend(y_pred)
-
-        # inidx = X.index.difference(outidx)
-        print("")
-    """
-    precision = [[] for i in range(len(classes))]
-    recall = [[] for i in range(len(classes))]
-    f1 = [[] for i in range(len(classes))]
-    support = [[] for i in range(len(classes))]
-
-    for report in cls_report:
-        for i in classes:
-            precision[i].append(report[str(i)]['precision'])
-            recall[i].append(report[str(i)]['recall'])
-            f1[i].append(report[str(i)]['f1-score'])
-            support[i].append(report[str(i)]['support'])
-
-    for i in classes:
-        plt.plot(precision[i], c="r", label="Precision")
-        plt.plot(recall[i], c="g", label="Recall")
-        plt.plot(f1[i], c="b", label="F1")
-        plt.legend()
-        #plt.xticks(xaxis, support[i])
-        plt.show()
-    """
-    print(classification_report(yt_cls, final_pred, labels=classes))
-    print(classification_report(yt_cls.iloc[out_idx], y_pred_list, labels=classes))
-
-    plt.plot([0,1,2])
-    plt.show()
 

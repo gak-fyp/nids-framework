@@ -1,5 +1,6 @@
 from detection.classification.models.bayes import Bayes
 
+
 class Classification:
     __save_folder  = ""
     __classes = []

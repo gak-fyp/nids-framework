@@ -81,10 +81,6 @@ class PcaOutlier:
             # Score = Weighted difference between original X and reproduced X
             for i in range(X.shape[0]):
                 score[i] += np.sum(np.abs(X[i] - R[i])) * self.__ev[j]
-
-            print ("Step "+ str(j + 1) + " of " + str(W.shape[1]) + "...", end='\r')
-        print("")
-        print("DONE")
         return score
 
     def __save_model(self):

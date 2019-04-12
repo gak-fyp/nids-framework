@@ -42,14 +42,12 @@ labels = ['BENIGN', 'Heartbleed', 'Bot', 'Web Attack � Brute Force', 'FTP-Pata
           'DoS Hulk', 'Infiltration', 'DoS slowloris', 'Web Attack � Sql Injection', 'DDoS', 'SSH-Patator',
           'DoS GoldenEye', 'Web Attack � XSS']
 
-
-
 classes = [i for i in range(len(labels))]
 
 # Base Truth configuration
-truth_size = 50000
+truth_size = 100000
 truth_update_frac = 0.01
-threshold_percentile = 90
+threshold_percentile = 40
 truth_save_folder = "./detection/outlier/truth/save_state/"
 
 outlier_save_folder = "./detection/outlier/save_state/"
