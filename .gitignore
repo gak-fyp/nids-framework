@@ -1,7 +1,8 @@
 .idea
-.vscodes
+.vscode
 __pycache__
-.csv
-.pkl
-.pcap
+*.csv
+*.pkl
+*.pcap
+*.joblib
 
