@@ -156,8 +156,8 @@ if __name__ == '__main__':
     print("Initializing detectors...")
     i = 0
     size = df_X.shape[0]
-    minsize = 100000000
-    maxsize = 500000000
+    minsize = 10000000000
+    maxsize = 500000000000
     new_features = df_X.columns
 
     scaler = StandardScaler()
@@ -210,12 +210,18 @@ if __name__ == '__main__':
             X = pd.DataFrame(df_X[i:j].values, columns=new_features, dtype=np.float64)
             y = pd.DataFrame(df_y[i:j].values, columns=['class'], dtype=np.int64)
 
+            normal_X = X.iloc[y.loc[y['class'] == 0].index]
+            det.update_outlier(normal_X)
+
+            det.update_classifier(X, np.ndarray.flatten(y.values))
+
+
             outlier_indices = det.detect_outliers(X)
             out_idx.extend([x + breakpoints[file][c] for x in outlier_indices])
             c += 1
 
             normal_indices = X.index.difference(outlier_indices)
-            det.update_outlier(X.iloc[normal_indices])
+            #det.update_outlier(X.iloc[normal_indices])
 
             outlier_X = X.iloc[outlier_indices]
             outlier_y = y.iloc[outlier_indices]
@@ -239,7 +245,7 @@ if __name__ == '__main__':
 
             #det.update_classifier(wrong_X, np.ndarray.flatten(wrong_y.values))
 
-            det.update_classifier(update_X, np.ndarray.flatten(update_y.values))
+            #det.update_classifier(update_X, np.ndarray.flatten(update_y.values))
 
             #det.update_classifier(outlier_X, np.ndarray.flatten(outlier_y.values))
 
