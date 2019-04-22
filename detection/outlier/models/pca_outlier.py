@@ -18,6 +18,12 @@ class PcaOutlier:
     __savefile_ev = ""
 
     def __init__(self, threshold_percentile, save_folder):
+        """
+
+        :param threshold_percentile:
+        :param save_folder:
+
+        """
         self.__threshold_percentile = threshold_percentile
         self.__savefile_pca = save_folder + "pca.joblib"
         self.__savefile_scale = save_folder + "pca_scale.joblib"
@@ -28,6 +34,12 @@ class PcaOutlier:
         self.__scale = StandardScaler()
 
     def train(self, truth):
+        """
+
+        :param truth:
+
+        :return:
+        """
         self.__scale.fit(truth)
         std_truth = self.__standardize(truth)
         self.__pca.fit(std_truth)
@@ -36,6 +48,12 @@ class PcaOutlier:
         self.__save_model()
 
     def predict(self, X):
+        """
+
+        :param X:
+
+        :return:
+        """
         if self.__pca is None:
             self.__load_model()
         std_X = self.__standardize(X)
@@ -47,23 +65,51 @@ class PcaOutlier:
         return np.array(outlier_indices)
 
     def update(self, new_truth):
+        """
+
+        :param new_truth:
+
+        :return:
+        """
         self.train(new_truth)
-        # TODO: If no longer using train(), add save_model()
+        # If no longer using train(), add save_model()
 
     def __standardize(self, X):
+        """
+
+        :param X:
+
+        :return:
+        """
         return self.__scale.transform(X)
 
     def __set_ev(self):
+        """
+
+        """
         variance_ratio = self.__pca.explained_variance_ratio_
         total_ratio = np.sum(variance_ratio)
         self.__ev = [np.sum(variance_ratio[0:j+1]) / total_ratio for j in range(len(variance_ratio))]
 
     def __set_threshold(self, truth, threshold_percentile):
+        """
+
+        :param truth:
+        :param threshold_percentile:
+
+        :return:
+        """
         score = self.__calculate_score(truth)
         # Threshold is the "threshold_percentile" percentile of score
         self.__threshold = np.percentile(score, threshold_percentile)
 
     def __calculate_score(self, X):
+        """
+
+        :param X:
+
+        :return:
+        """
         score = np.zeros((X.shape[0],))
         p = 0
         for e in self.__ev:
@@ -84,12 +130,18 @@ class PcaOutlier:
         return score
 
     def __save_model(self):
+        """
+
+        """
         dump(self.__pca, self.__savefile_pca)
         dump(self.__scale, self.__savefile_scale)
         dump(self.__threshold, self.__savefile_threshold)
         dump(self.__ev, self.__savefile_ev)
 
     def __load_model(self):
+        """
+
+        """
         if os.path.exists(self.__savefile_pca) and os.path.exists(self.__savefile_scale) and\
             os.path.exists(self.__savefile_threshold) and os.path.exists(self.__savefile_ev):
             self.__pca = load(self.__savefile_pca)

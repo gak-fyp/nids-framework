@@ -3,10 +3,7 @@ import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.exceptions import UndefinedMetricWarning
 
-from sklearn.preprocessing import StandardScaler
-
 import random as rd
-import time
 import sys
 
 import warnings
@@ -17,46 +14,21 @@ warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 from config.config import *
 
 from detection.detection import Detection
-from detection.preprocessing.preprocessing import process_features
 from detection.preprocessing.preprocessing import process_labels
 
+MIN_SIZE = 500
+MAX_SIZE = max(MIN_SIZE+1, 2000)
 
-def load_data(data_file, categorical_feature_list, categories_list):
-    df_X = pd.read_csv(data_file)
-    df_X = process_features(df_X, categorical_feature_list, categories_list)
-    df_X = df_X.astype(np.float64)
-    return df_X
-
-
-def load_labels(labels_file, labels, classes):
-    df_y = pd.read_csv(labels_file)
-    df_y = process_labels(df_y, labels, classes)
-    return df_y
-
-def process_labels(df_y, labels, classes):
-    label_to_id = {labels[i] : classes[i] for i in range(len(labels))}
-    values = np.ndarray.flatten(df_y.values)
-    ids = []
-    for val in values:
-        ids.append(label_to_id[val])
-    ids = pd.DataFrame(ids, columns=["class"])
-    return ids
-
-
-def overall_report(df_y, y_pred_dict):
-    """
-    :param df_y: DataFrame containing true classification
-    :param y_pred_dict: Dictionary {index : class} where index is member of outlier_indices
-    :return: Print overall classiifcation report
-    """
-    final_pred = np.zeros((df_y.shape[0]))
-    for k, v in y_pred_dict.items():
-        final_pred[k] = v
-
-    print(classification_report(df_y, final_pred))
-
+np.set_printoptions(linewidth=150)
 
 def outlier_report(df_y, outlier_indices):
+    """
+
+    :param df_y:
+    :param outlier_indices:
+
+    :return:
+    """
     detected_attack = 0
     detected_normal = 0
     false_negtive = 0
@@ -95,17 +67,6 @@ def outlier_report(df_y, outlier_indices):
           round(detected_normal / total * 100, 4))
     print("")
 
-
-def __log(message):
-    print(message, end='')
-    time.sleep(0.3)
-    print(".", end='')
-    time.sleep(0.3)
-    print(".", end='')
-    time.sleep(0.3)
-    print(".", end='')
-    time.sleep(0.3)
-
 def classification_result(y, y_pred):
     assert len(y) == len(y_pred)
     correct = []
@@ -131,6 +92,7 @@ def read_file(name):
     return df_X, df_y
 
 if __name__ == '__main__':
+
     data_directoy = "../MachineLearningCVE/"
     filemon = "Monday-WorkingHours.pcap_ISCX.csv"
     filetue = "Tuesday-WorkingHours.pcap_ISCX.csv"
@@ -144,7 +106,6 @@ if __name__ == '__main__':
     file_list = [filemon, filetue, filewed, filethr1, filethr2, filefri1, filefri2, filefri3]
     file_list = [data_directoy + x for x in file_list]
 
-
     print("Loading data...")
     df_X, df_y = read_file(file_list[0])
     print("Done")
@@ -156,19 +117,13 @@ if __name__ == '__main__':
     print("Initializing detectors...")
     i = 0
     size = df_X.shape[0]
-    minsize = 50
-    maxsize = 200
     new_features = df_X.columns
-
-    #scaler = StandardScaler()
 
     while i < size:
         print(str(i) + "/" + str(size))
-        j = rd.randint(i + minsize, i + maxsize)
+        j = rd.randint(i + MIN_SIZE, i + MAX_SIZE)
         j = min(j, size)
 
-        #scaler.partial_fit(df_X)
-        #X= pd.DataFrame(scaler.transform(df_X[i:j].values), columns=new_features, dtype=np.float64)
         X = pd.DataFrame(df_X[i:j].values, columns=new_features, dtype=np.float64)
         y= np.ndarray.flatten(pd.DataFrame(df_y[i:j].values, columns=['class'], dtype=np.int64).values)
         if i == 0:
@@ -176,51 +131,34 @@ if __name__ == '__main__':
             i = j
             continue
         det.update_outlier(X)
-        det.update_classifier(X, y)
+        #det.update_classifier(X, y)
         i = j
+    print("Training Complete")
 
-
-    print("Training Done")
+    cls_reports = []
     breakpoints = {x : [] for x in file_list[1:]}
-
-    np.set_printoptions(linewidth=150)
-
     for file in file_list[1:]:
         print("Loading data...")
         df_X, df_y = read_file(file)
-
-        #df_X = scaler.transform(df_X)
         df_X = pd.DataFrame(df_X, columns=new_features, dtype=np.float64)
-
-
         print("Done")
-        print("Detecting file " + file)
 
+        print("Analyzing file " + file)
         out_idx = []
         final_pred = []
         y_pred_list = []
-
         i = 0
         c = 0
         size = df_X.shape[0]
         while i < size:
             breakpoints[file].append(i)
             print(str(i) + "/" + str(size))
-            j = rd.randint(i + minsize, i + maxsize)
+            j = rd.randint(i + MIN_SIZE, i + MAX_SIZE)
             j = min(j, size)
             X = pd.DataFrame(df_X[i:j].values, columns=new_features, dtype=np.float64)
             y = pd.DataFrame(df_y[i:j].values, columns=['class'], dtype=np.int64)
 
-            #normal_X = X.iloc[y.loc[y['class'] == 0].index]
-            #det.update_outlier(normal_X)
-
-            #det.update_classifier(X, np.ndarray.flatten(y.values))
-
-
             outlier_indices = det.detect_outliers(X)
-            out_idx.extend([x + breakpoints[file][c] for x in outlier_indices])
-            c += 1
-
             normal_indices = X.index.difference(outlier_indices)
             det.update_outlier(X.iloc[normal_indices])
 
@@ -228,29 +166,19 @@ if __name__ == '__main__':
             outlier_y = y.iloc[outlier_indices]
 
             y_pred = det.classfiy(outlier_X)
+            det.update_classifier(outlier_X, np.ndarray.flatten(outlier_y.values))
+
+            normal_X = X.iloc[outlier_y.loc[outlier_y['class'] == 0].index]
+            det.update_outlier(normal_X)
+
+            out_idx.extend([x + breakpoints[file][c] for x in outlier_indices])
+            c += 1
             y_pred_list.extend(y_pred)
 
             if c % 10 == 0:
                 outlier_report(np.ndarray.flatten(y.values), outlier_indices)
                 print(classification_report(np.ndarray.flatten(outlier_y.values), y_pred, labels=classes))
                 print(confusion_matrix(np.ndarray.flatten(outlier_y.values), y_pred, labels=classes))
-
-
-            correct_indices, wrong_indices = classification_result(np.ndarray.flatten(outlier_y.values), y_pred)
-
-            normal_X = outlier_X.iloc[correct_indices]
-            #wrong_X = outlier_X.iloc[wrong_indices]
-            #wrong_y = outlier_y.iloc[wrong_indices]
-
-            #update_X = outlier_X.append(wrong_X)
-            #update_y = outlier_y.append(wrong_y)
-
-            #det.update_classifier(wrong_X, np.ndarray.flatten(wrong_y.values))
-
-            #det.update_classifier(update_X, np.ndarray.flatten(update_y.values))
-
-            det.update_outlier(normal_X)
-            det.update_classifier(outlier_X, np.ndarray.flatten(outlier_y.values))
 
             outcount = 0
             for k in range(X.shape[0]):
@@ -260,6 +188,8 @@ if __name__ == '__main__':
                 else:
                     final_pred.append(0)  # Class Normal
             i = j
+
+        cls_reports.append(classification_report(df_y.values, final_pred, labels=classes, output_dict=True))
 
         print("FINAL REPORT OF FILE " + file)
         print("======================================================================================")
@@ -272,4 +202,28 @@ if __name__ == '__main__':
         print(confusion_matrix(df_y.values, final_pred, labels=classes))
         print("======================================================================================")
 
+    micro_avg = []
+    macro_avg = []
+    weighted = []
+    support = []
+    for i in range(len(cls_reports)):
+        micro_avg.append(cls_reports[i]['micro avg'])
+        macro_avg.append(cls_reports[i]['macro avg'])
+        weighted.append(cls_reports[i]['weighted avg'])
+        support.append(cls_reports[i]['weighted avg']['support'])
 
+    total = sum(support)
+    weights = [x/total for x in support]
+    print(weights)
+    mi = [0,0,0]
+    ma = [0,0,0]
+    w = [0,0,0]
+    word = ['precision', 'recall', 'f1-score']
+    for i in range(len(cls_reports)):
+        for j in range(3):
+            mi[j] += weights[i] * micro_avg[i][word[j]]
+            ma[j] += weights[i] * macro_avg[i][word[j]]
+            w[j] += weights[i] * weighted[i][word[j]]
+    print(mi)
+    print(ma)
+    print(w)

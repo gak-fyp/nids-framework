@@ -12,26 +12,55 @@ class Classification:
     __weights = []
 
     def __init__(self, classes, save_folder):
+        """
+
+        :param classes:
+        :param save_folder:
+        """
+
         self.__classes = classes
         self.__save_folder = save_folder
         self.__set_ensemble()
         self.__weights = [2, 1, 3]
 
     def train(self, X, y):
+        """
+
+        :param X:
+        :param y:
+
+        :return:
+        """
         for model in self.__ensemble:
             model.train(X, y)
 
     def predict(self, X):
+        """
+
+        :param X:
+
+        :return:
+        """
         y_list = []
         for model in self.__ensemble:
             y_list.append(model.predict(X))
         return self.__merge_pred(np.asarray(y_list))
 
     def update(self, X, y):
+        """
+
+        :param X:
+        :param y:
+
+        :return:
+        """
         for model in self.__ensemble:
             model.update(X, y)
 
     def __set_ensemble(self):
+        """
+
+        """
         bae = Bayes(self.__save_folder, self.__classes)
         sgd = SGD(self.__save_folder, self.__classes)
         pas = PassiveAggressive(self.__save_folder, self.__classes)
@@ -40,7 +69,12 @@ class Classification:
         self.__ensemble.append(pas)
 
     def __merge_pred(self, y_list):
-        # Majority Voting. If no majority, the smallest numbered class is chosen
+        """ Merge prediction by Weighted Majority Voting. If no majority, the smallest numbered class is chosen.
+
+        :param y_list:
+
+        :return:
+        """
         y_pred = []
         for i in range(len(y_list[0])):
             pred_1y = []
