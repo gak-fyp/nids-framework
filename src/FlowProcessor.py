@@ -50,7 +50,6 @@ class FlowProcessor:
             udph = unpack('!HHHH', udp_hdr)
             packetInfo = BasicPacketInfo(iph[8],iph[9],udph[0],udph[1],protocol,ts,1)
             packetInfo.setPayloadBytes(udph[2]-8)
-        #print("Size:{}".format(udph[2]-8))
             packetInfo.setHeaderBytes(8)
         return packetInfo
     
@@ -95,18 +94,3 @@ class FlowProcessor:
             packetInfo.setPayloadBytes(udph[2]-8)
             packetInfo.setHeaderBytes(8)
         return packetInfo
-
-
-'''print('TS:{}'.format(ts))
-        print ('Payload:{}'.format(iph[3]))
-        print ('NH:{}'.format(iph[4]))
-        print ('Hop:{}'.format(iph[5]))
-        print ('SRC:{}'.format(socket.inet_ntop(10,iph[6])))
-        print ('DEST:{}'.format(socket.inet_ntop(10,iph[7])))
-        print ('Length of SRC:{}'.format(len(iph[6])))
-        print ('SRCPORT:{}'.format(udph[0]))
-        print ('DSTPORT:{}'.format(udph[1]))
-        print()'''    
-
-
-            

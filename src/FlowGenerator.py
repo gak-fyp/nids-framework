@@ -6,15 +6,12 @@ import socket
 import signal 
 from BasicPacketInfo import BasicPacketInfo
 from BasicFlow import BasicFlow
+import time
 from struct import *
 
 
-# All that is left is for us to figure out how can finished flows be stored and or printed
-
 class FlowGenerator:
-    def sig_handler(self,sig,frame):
-        print('HandlerCalled!')
-        sys.exit(0)
+    
 
 
     def __init__(
@@ -30,7 +27,7 @@ class FlowGenerator:
         self.init()
         self.__header = 0
         self.__fileObject = output_file_object
-        signal.signal(signal.SIGINT, self.sig_handler)
+        
 
 
 
@@ -57,48 +54,36 @@ class FlowGenerator:
             flow = self.__currentFlows[packetInfo.getFlowId()]
             #print ('Flow: {} exists'.format(packetInfo.getFlowId()))
             if currentTimestamp - flow.getFlowStartTime() > self.__flowTimeout:
-
-                # flow count
-                    # flow listener
-                        # extra shit
-
-                print ('Flow time out')
                 self.__currentFlows[packetInfo.getFlowId()].dumpFlowBasedFeatures(",",self.__fileObject)
                 del self.__currentFlows[packetInfo.getFlowId()]
                 self.__currentFlows[packetInfo.getFlowId()] =  BasicFlow(self.__bidirectional,packetInfo, flow.getSrc(),flow.getDst(),flow.getSrcPort(), flow.getDstPort())
             elif packetInfo.hasFlagFIN():
-
-                # 1
-                # 2
-
-                #print ('Flow finished')
-
                 flow.addPacket(packetInfo)
                 self.__currentFlows[packetInfo.getFlowId()].dumpFlowBasedFeatures(",",self.__fileObject)
                 del self.__currentFlows[packetInfo.getFlowId()]
             else:
 
-               
-                print ('flow updated')
-
-                
                 flow.updateActiveIdleTime(currentTimestamp, self.__activityTimeout)
                 flow.addPacket(packetInfo)
                 self.__currentFlows[packetInfo.getFlowId()] = flow
         else:
 
-            print ('Creating Flow:{}'.format(packetInfo.getFlowId()))
             self.__flowCount += 1
             self.__currentFlows[packetInfo.getFlowId()] = BasicFlow(self.__bidirectional, packetInfo)
 
-    def listBasic(self):
-        #print ('final list')
-        print("A total of {}".format(self.__flowCount))
-        
+    def flush_flows(self):
+        print("A total of {} flows generated".format(self.__flowCount))
         for (key, val) in self.__currentFlows.items():           
             val.dumpFlowBasedFeatures(',', self.__fileObject)
-            #if count == 5:
-            #    break 
 
-#printer remaining!!
-
+    def flow_timeout(self):
+        print('Checking flowtimeout.')
+        ts = time.time()
+        ts = ts*1000000
+        target_keys = []
+        for (key, val) in self.__currentFlows.items():           
+            if ts - val.getFlowStartTime() > self.__flowTimeout:
+                target_keys.append(key)
+        for key in target_keys:
+            self.__currentFlows[key].dumpFlowBasedFeatures(",",self.__fileObject)
+            del self.__currentFlows[key]

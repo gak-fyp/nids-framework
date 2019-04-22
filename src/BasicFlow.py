@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from BasicPacketInfo import BasicPacketInfo
-from statSummary import summaryStatistics
+from SummaryStatistics import summaryStatistics
 from datetime import datetime
 import socket
 import time 
@@ -106,7 +106,7 @@ class BasicFlow:
     
     def firstPacket(self, packetInfo):
 
-        # 1,2,3
+    
         self.updateFlowBulk(packetInfo)
         self.detectUpdateSubflows(packetInfo)
         self.checkFlags(packetInfo)
