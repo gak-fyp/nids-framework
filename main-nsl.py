@@ -108,40 +108,6 @@ def classification_result(y, y_pred):
     return correct, wrong
 
 if __name__ == '__main__':
-
-    X = [[],[],[],[],[],[],[]]
-    X[0] = [5.4, 99.8, 10.25,89, 95, 92,94, 97, 95]
-    X[1] = [49.4, 94.6, 64.9,28 ,49, 36,43, 62, 51]
-    X[2] = [2.3, 99.3, 4.5,	98, 70, 82,	99 ,84, 91]
-    X[3] = [0.02, 97.2, 0.04,100 ,80, 89,100, 87, 93]
-    X[4] = [1.8, 99.8, 3.54,95, 62, 75,	98, 79, 87]
-    X[5] = [68.5, 98.2, 80.7,31, 12, 18,43, 29, 35]
-    X[6] = [66, 99.9, 79.5,	34, 18 ,24,	43,29, 35]
-
-    y = [[],[],[],[],[],[],[]]
-    y[0] = [5.2,99.8,9.88,97,95,95,98,97,97]
-    y[1] = [50.5,97.8,66.6, 96,72,81,96,79,86]
-    y[2] = [2.4,99.3,4.69,98,72,83,99,85,92]
-    y[3] = [0.02,97.2, 0.04, 100, 79, 88, 100,86,93]
-    y[4] = [1.9,99.7,3.73, 98,42,58,99,70,81]
-    y[5] = [70,99.2, 82.1,100,82,87 ,99,85,91]
-    y[6] = [65.7,96.3,78.1, 100,79,87,97,81,88]
-
-    b = [0.1938, 0.301, 0.07404, 0.1254, 0.083, 0.1245, 0.0981]
-
-    for i in range(7):
-        X[i] = [b[i] * x for x in X[i]]
-        y[i] = [b[i] * x for x in y[i]]
-
-    j = [0,0,0,0,0,0,0,0,0]
-    j2 = [0,0,0,0,0,0,0,0,0]
-    for k in range(9):
-        for i in range(7):
-            j[k] += X[i][k]
-            j2[k] += y[i][k]
-    print(j)
-    print(j2)
-    exit()
     data_directoy = "../NSL-KDD/"
     train_file = data_directoy + "KDDTrain+.csv"
     train_file_20_percent = data_directoy + "KDDTrain+_20Percent.csv"
@@ -219,8 +185,8 @@ if __name__ == '__main__':
     exit()
     """
     i = 0
-    minsize = 50
-    maxsize = 200
+    minsize = 500000000
+    maxsize = 5000000000
     s = Xt.shape[0]
     list_Xt = []
     list_yt = []
@@ -281,17 +247,13 @@ if __name__ == '__main__':
 
         #print(classification_report(outlier_y.values, y_pred, labels=classes))
 
-
+        print(outlier_y.values.shape)
         correct_indices, wrong_indices = classification_result(outlier_y.values, y_pred)
 
         correct_X = outlier_X.iloc[correct_indices]
-        wrong_X = outlier_X.iloc[wrong_indices]
-        wrong_y = outlier_y.iloc[wrong_indices]
 
-        update_X = outlier_X.append(wrong_X)
-        update_y = outlier_y.append(wrong_y)
-
-        det.update_classifier(update_X, update_y)
+        det.update_outlier(correct_X)
+        det.update_classifier(outlier_X, np.ndarray.flatten(outlier_y.values))
         #det.update_classifier(wrong_X, wrong_y)
         #det.update_classifier(outlier_X, outlier_y)
 
@@ -315,6 +277,4 @@ if __name__ == '__main__':
     print(classification_report(yt_cls.iloc[out_idx], y_pred_list, labels=classes))
     print(classification_report(yt_cls, final_pred, labels=classes))
 
-    plt.plot([0,1,2])
-    plt.show()
 

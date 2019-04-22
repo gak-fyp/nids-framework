@@ -45,8 +45,8 @@ labels = ['BENIGN', 'Heartbleed', 'Bot', 'Web Attack � Brute Force', 'FTP-Pata
 classes = [i for i in range(len(labels))]
 
 # Base Truth configuration
-truth_size = 10000
-truth_update_frac = 0.01
+truth_size = 20000
+truth_update_frac = 0.10
 threshold_percentile = 40
 truth_save_folder = "./detection/outlier/truth/save_state/"
 

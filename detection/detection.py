@@ -7,11 +7,11 @@ from detection.classification.classification import Classification
 from detection.outlier.truth.truth import Truth
 
 
-
 class Detection:
     __outlier = None
     __cls = None
     __truth = None
+    __scale_cls = None
 
     __classes = []
     __threshold_percentile = 0.0
@@ -31,9 +31,7 @@ class Detection:
 
     def initialize(self, normal_data, X, y):
         self.__truth.set_truth(normal_data)
-
         self.__outlier.train(self.__truth.get_truth())
-
         self.__cls.train(X, y)
 
     def detect_outliers(self, X):

@@ -1,5 +1,5 @@
 from detection.outlier.models.pca_outlier import PcaOutlier
-
+from detection.outlier.models.kmeans import KMeans
 
 class Outlier:
     __threshold_percentile = 0
@@ -28,11 +28,13 @@ class Outlier:
             model.update(new_truth)
 
     def __set_ensemble(self):
-        # TODO: Add new models
         pca = PcaOutlier(self.__threshold_percentile, self.__save_folder)
+        km = KMeans(self.__threshold_percentile, self.__save_folder)
         self.__ensemble.append(pca)
+        self.__ensemble.append(km)
 
     def __merge_pred(self, y_list):
-        # TODO: Update Merging Function
-        y_pred = y_list[0]
-        return y_pred
+        y_pred = set(y_list[0])
+        for y in y_list:
+            y_pred = y_pred.union(y)
+        return list(y_pred)

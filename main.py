@@ -156,19 +156,20 @@ if __name__ == '__main__':
     print("Initializing detectors...")
     i = 0
     size = df_X.shape[0]
-    minsize = 10000000000
-    maxsize = 500000000000
+    minsize = 50
+    maxsize = 200
     new_features = df_X.columns
 
-    scaler = StandardScaler()
+    #scaler = StandardScaler()
 
     while i < size:
         print(str(i) + "/" + str(size))
         j = rd.randint(i + minsize, i + maxsize)
         j = min(j, size)
 
-        scaler.partial_fit(df_X)
-        X= pd.DataFrame(scaler.transform(df_X[i:j].values), columns=new_features, dtype=np.float64)
+        #scaler.partial_fit(df_X)
+        #X= pd.DataFrame(scaler.transform(df_X[i:j].values), columns=new_features, dtype=np.float64)
+        X = pd.DataFrame(df_X[i:j].values, columns=new_features, dtype=np.float64)
         y= np.ndarray.flatten(pd.DataFrame(df_y[i:j].values, columns=['class'], dtype=np.int64).values)
         if i == 0:
             det.initialize(X, X, y)
@@ -179,7 +180,7 @@ if __name__ == '__main__':
         i = j
 
 
-    print("Done")
+    print("Training Done")
     breakpoints = {x : [] for x in file_list[1:]}
 
     np.set_printoptions(linewidth=150)
@@ -188,7 +189,7 @@ if __name__ == '__main__':
         print("Loading data...")
         df_X, df_y = read_file(file)
 
-        df_X = scaler.transform(df_X)
+        #df_X = scaler.transform(df_X)
         df_X = pd.DataFrame(df_X, columns=new_features, dtype=np.float64)
 
 
@@ -210,10 +211,10 @@ if __name__ == '__main__':
             X = pd.DataFrame(df_X[i:j].values, columns=new_features, dtype=np.float64)
             y = pd.DataFrame(df_y[i:j].values, columns=['class'], dtype=np.int64)
 
-            normal_X = X.iloc[y.loc[y['class'] == 0].index]
-            det.update_outlier(normal_X)
+            #normal_X = X.iloc[y.loc[y['class'] == 0].index]
+            #det.update_outlier(normal_X)
 
-            det.update_classifier(X, np.ndarray.flatten(y.values))
+            #det.update_classifier(X, np.ndarray.flatten(y.values))
 
 
             outlier_indices = det.detect_outliers(X)
@@ -221,7 +222,7 @@ if __name__ == '__main__':
             c += 1
 
             normal_indices = X.index.difference(outlier_indices)
-            #det.update_outlier(X.iloc[normal_indices])
+            det.update_outlier(X.iloc[normal_indices])
 
             outlier_X = X.iloc[outlier_indices]
             outlier_y = y.iloc[outlier_indices]
@@ -237,17 +238,19 @@ if __name__ == '__main__':
 
             correct_indices, wrong_indices = classification_result(np.ndarray.flatten(outlier_y.values), y_pred)
 
-            wrong_X = outlier_X.iloc[wrong_indices]
-            wrong_y = outlier_y.iloc[wrong_indices]
+            normal_X = outlier_X.iloc[correct_indices]
+            #wrong_X = outlier_X.iloc[wrong_indices]
+            #wrong_y = outlier_y.iloc[wrong_indices]
 
-            update_X = outlier_X.append(wrong_X)
-            update_y = outlier_y.append(wrong_y)
+            #update_X = outlier_X.append(wrong_X)
+            #update_y = outlier_y.append(wrong_y)
 
             #det.update_classifier(wrong_X, np.ndarray.flatten(wrong_y.values))
 
             #det.update_classifier(update_X, np.ndarray.flatten(update_y.values))
 
-            #det.update_classifier(outlier_X, np.ndarray.flatten(outlier_y.values))
+            det.update_outlier(normal_X)
+            det.update_classifier(outlier_X, np.ndarray.flatten(outlier_y.values))
 
             outcount = 0
             for k in range(X.shape[0]):

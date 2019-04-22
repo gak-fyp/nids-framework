@@ -35,4 +35,4 @@ class Bayes:
         if os.path.exists(self.__savefile_bae):
             self.__bae = load(self.__savefile_bae)
         else:
-            print("ERROR: PCA not initialized. Run train() first.")
+            print("ERROR: Bayes not initialized. Run train() first.")
